@@ -102,6 +102,9 @@ const drawGrid = () => {
   const drawCells = () => {
     const cellsPtr = universe.cells();
     const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
+
+    const daysPtr = universe.days();
+    const days = new Uint32Array(memory.buffer, daysPtr, width * height);
   
     // ctx.beginPath();
   
@@ -110,9 +113,17 @@ const drawGrid = () => {
         const idx = getIndex(row, col);
   
         ctx.beginPath();
-        ctx.fillStyle = cells[idx] === Cell.Dead
-          ? DEAD_COLOR
-          : ALIVE_COLOR;
+        if (cells[idx] === Cell.Alive) {
+            ctx.fillStyle = ALIVE_COLOR;
+        }else if (days[idx] > 90){
+            ctx.fillStyle = DEAD_COLOR;
+        }else {
+            ctx.fillStyle = `rgb(${days[idx]*3+13}, ${days[idx]*3+71}, ${days[idx]*3+113})`;
+            // ctx.fillStyle = `rgb(255, 255, 255)`;
+        }
+        // ctx.fillStyle = days[idx] === Cell.Dead
+        //   ? DEAD_COLOR
+        //   : ALIVE_COLOR;
   
         // ctx.arc(col * (CELL_SIZE + 1) + 1, row * (CELL_SIZE + 1) + 1, CELL_SIZE/2, 0, 2 * Math.PI);
         // ctx.fill();
