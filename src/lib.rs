@@ -37,10 +37,23 @@ impl Cell {
 }
 
 #[wasm_bindgen]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Life {
+    pub days:u32
+}
+
+impl Life {
+    fn toggle(&mut self) {
+        self.days = 0;
+    }
+}
+
+#[wasm_bindgen]
 pub struct Universe {
     width: u32,
     height: u32,
     cells: Vec<Cell>,
+    days: Vec<u32>
 }
 
 impl Universe {
@@ -76,6 +89,7 @@ impl Universe {
         for (row, col) in cells.iter().cloned() {
             let idx = self.get_index(row, col);
             self.cells[idx] = Cell::Alive;
+            self.days[idx] = 0;
         }
     }
 }
@@ -85,6 +99,7 @@ impl Universe {
 impl Universe {
     pub fn tick(&mut self) {
         let mut next = self.cells.clone();
+        let mut next_days = self.days.clone();
 
         for row in 0..self.height {
             for col in 0..self.width {
@@ -109,18 +124,26 @@ impl Universe {
                 };
 
                 next[idx] = next_cell;
+                match next[idx] {
+                    Cell::Dead => {
+                        next_days[idx] += 1;
+                    }
+                    Cell::Alive => {
+                        next_days[idx] = 0;
+                    }
+                }
             }
         }
-
         self.cells = next;
+        self.days = next_days;
     }
 
     pub fn new() -> Universe {
         utils::set_panic_hook();
 
         log!("new universe");
-        let width = 64;
-        let height = 64;
+        let width = 150;
+        let height = 150;
 
         let cells = (0..width * height)
             .map(|i| {
@@ -131,10 +154,20 @@ impl Universe {
                 }
             })
             .collect();
+        let days = (0..width * height)
+            .map(|i| {
+                if i % 2 == 0 || i % 7 == 0 {
+                    0
+                } else {
+                    100
+                }
+            })
+            .collect();
         Universe {
             width,
             height,
             cells,
+            days,
         }
     }
 
@@ -152,6 +185,10 @@ impl Universe {
 
     pub fn cells(&self) -> *const Cell {
         self.cells.as_ptr()
+    }
+
+    pub fn days(&self) -> *const u32 {
+        self.days.as_ptr()
     }
 
      /// Set the width of the universe.
@@ -174,6 +211,7 @@ impl Universe {
     pub fn toggle_cell(&mut self, row: u32, column: u32) {
         let idx = self.get_index(row, column);
         self.cells[idx].toggle();
+        self.days[idx] = 0;
         log!("toggling ({}, {})", row, column);
     }
 }
